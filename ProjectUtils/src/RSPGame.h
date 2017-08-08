@@ -10,6 +10,8 @@
 #include<iostream>
 #include<stdio.h>
 #include "MThread.h"
+#include "TCPSocket.h"
+#include "Client.h"
 using namespace std;
 namespace networkingLab {
 
@@ -19,6 +21,7 @@ private:
 	TCPSocket* clientB;
 
 public:
+	int whoWon(string a,string b);//this is our game policy
 	virtual void run();
 	RSPGame(Client* a,Client* b);
 	virtual ~RSPGame();

@@ -23,7 +23,7 @@ public:
 	/***getters and setters****/
 	void setRank(int r){rank=r;};
 	void setAvailability(bool a){availability=a;};
-	bool setNewPassword(string newPass){password=newPass;};//if we want we can set guidelines to valid password
+	void setNewPassword(string newPass){password=newPass;};//if we want we can set guidelines to valid password
 	string getUsername(){return username;};
 	string getPassword(){return password;};
 	int getRank(){return rank;};

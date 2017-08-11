@@ -17,10 +17,7 @@ namespace networkingLab {
 
 RSPGame::RSPGame(Client* a,Client* b) {
 	// TODO Auto-generated constructor stub
-	this->clientA=new TCPSocket(portA);//bind to client a
-	this->clientB=new TCPSocket(portB);//bind to client b
-	a->setGameSocket(IP,portA);
-	b->setGameSocket(IP, portB);
+
 
 }
 

@@ -19,8 +19,10 @@ class RSPGame: public MThread {
 private:
 	TCPSocket* clientA;
 	TCPSocket* clientB;
+	char winner;
 
 public:
+	char getWinner(){return winner;};
 	int whoWon(string a,string b);//this is our game policy
 	virtual void run();
 	RSPGame(Client* a,Client* b);

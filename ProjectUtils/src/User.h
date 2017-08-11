@@ -21,7 +21,7 @@ private:
 	bool availability;
 public:
 	/***getters and setters****/
-	void setRank(int r){rank=r;};
+	void setRank(int ra){rank=ra;};
 	void setAvailability(bool a){availability=a;};
 	void setNewPassword(string newPass){password=newPass;};//if we want we can set guidelines to valid password
 	string getUsername(){return username;};

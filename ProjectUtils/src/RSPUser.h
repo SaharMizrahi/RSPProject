@@ -15,7 +15,10 @@ class RSPUser {
 	int rank;
 	TCPSocket* socket;
 	int port;
+	bool availableForGame;
 public:
+	void setAvailability(bool flag){this->availableForGame=flag;};
+	bool isAvailable(){return availableForGame;};
 	char* getUsername(){return username;};
 	int getRank(){return rank;};
 	TCPSocket* getSocket(){return socket;};

@@ -15,11 +15,15 @@ RSPUser::RSPUser(char* u,int r,TCPSocket* s,int p) {
 	this->rank=r;
 	this->socket=s;
 	this->port=p;
+	this->availableForGame=false;
 
 }
+
 
 RSPUser::~RSPUser() {
 	// TODO Auto-generated destructor stub
 }
 
 } /* namespace networkingLab */
+
+

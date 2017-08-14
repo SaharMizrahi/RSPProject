@@ -19,7 +19,12 @@ RSPUser::RSPUser(char* u,int r,TCPSocket* s,int p) {
 
 }
 
-
+void RSPUser::setNewRank(int newRank) {
+	if(newRank>=0)
+	{
+		rank=newRank;
+	}
+}
 RSPUser::~RSPUser() {
 	// TODO Auto-generated destructor stub
 }

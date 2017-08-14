@@ -19,7 +19,7 @@ class Game : public MThread{
 	RSPUser* user1;
 	RSPUser* user2;
 	void startGame();
-
+	int policy(char* c1,char* c2);
 public:
 	void run();
 	Game(RSPUser* u1,RSPUser* u2);

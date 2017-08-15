@@ -1,0 +1,37 @@
+/*
+ * RSPGameClient.h
+ *
+ *  Created on: Aug 15, 2017
+ *      Author: user
+ */
+
+#ifndef SRC_RSPGAMECLIENT_H_
+#define SRC_RSPGAMECLIENT_H_
+#include<iostream>
+#include<stdio.h>
+#include "TCPSocket.h"
+#include "UDPSocket.h"
+#include "MThread.h"
+using namespace std;
+namespace networkingLab {
+
+class RSPGameClient: public MThread {
+
+	bool endOfSession;
+
+	TCPSocket* socket;
+
+	void startInterface();
+	void loginInterface(char* cmd,char* username,char* password);
+	void serverinterface(TCPSocket* socket );
+	void gameInterface();
+	void exit();
+public:
+	void run();
+	RSPGameClient();
+	virtual ~RSPGameClient();
+};
+
+} /* namespace networkingLab */
+
+#endif /* SRC_RSPGAMECLIENT_H_ */

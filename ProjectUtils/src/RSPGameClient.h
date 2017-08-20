@@ -16,19 +16,22 @@ using namespace std;
 namespace networkingLab {
 
 class RSPGameClient: public MThread {
-
-	bool endOfSession;
-
-	TCPSocket* socket;
-
-	void startInterface();
-	void loginInterface(char* cmd,char* username,char* password);
-	void serverinterface(TCPSocket* socket );
-	void gameInterface();
-	void exit();
+	TCPSocket* sock;
+	char* username;
+	char* password;
+	void setUserAvailability(bool flag);
+	void handleGame(UDPSocket* gameSocket);
 public:
+
+	bool loginOrRegister(char* cmd);
+	void showHighScores();
+	void showUsers();
+	void waitForGame();
+	void startGameWith(char* username);
+
+
 	void run();
-	RSPGameClient();
+	RSPGameClient(char* u,char* p);
 	virtual ~RSPGameClient();
 };
 

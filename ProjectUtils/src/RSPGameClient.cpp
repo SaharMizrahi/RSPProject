@@ -9,168 +9,233 @@
 #include <string.h>
 #include "LoginProtocol.h"
 #include "ServerProtocol.h"
+#include "MultipleTCPSocketsListener.h"
 namespace networkingLab {
 
-RSPGameClient::RSPGameClient() {
-	// TODO Auto-generated constructor stub.
-
-	this->socket=NULL;
-	this->endOfSession=false;
-
-}
-void RSPGameClient::startInterface() {
-	do{
-	cout<<"MENU:"<<endl;
-	cout<<"login <username> <password>"<<endl;
-	cout<<"register <username> <password>"<<endl;
-	cout<<"exit game"<<endl;
-	char buffer[100];
-	cin>>buffer;
-	char* cmd=strtok(buffer," ");
-	if(strcmp(cmd,"login")==0||strcmp(cmd,"register")==0)
-	{
-		char* username=strtok(NULL," ");
-		char* password=strtok(NULL," ");
-		this->loginInterface(cmd, username, password);
-
-	}
-	else if(strcmp(cmd,"exit")==0)
-	{
-		endOfSession=true;
-	}
-	else
-	{
-		cout<<"wrong command..."<<endl;
-	}
-	}while(!endOfSession);
-
-	this->exit();
 
 
 
+RSPGameClient::RSPGameClient(char* u,char* p) {
+	sock=new TCPSocket(SERVER_IP,SERVER_PORT);
+	this->username=u;
+	this->password=p;
 
-
-}
-void RSPGameClient::loginInterface(char* cmd,char* username,char* password) {
-	this->socket=new TCPSocket(SERVER_IP,SERVER_PORT);
-	if(socket!=NULL)
-	{
-		char buffer[100];
-		strcat(buffer,cmd);
-		strcat(buffer,username);
-		strcat(buffer,password);
-		int size=htonl(strlen(buffer)+1);
-		//send to server <command> <username> <password>
-		socket->write((char*)&size, 4);
-		socket->write(buffer, size);
-		int serverAnswer;
-		socket->read((char*)&serverAnswer, 4);
-		switch(ntohl(serverAnswer))
-		{
-		case LOGIN_APPROVED:
-		case REGISTER_APPROVED:
-			cout<<"connecting to server..."<<endl;
-			int newPort;
-			socket->read((char*)&newPort, 4);
-			sleep(2);
-			socket=new TCPSocket(SERVER_IP,ntohl(newPort));
-			this->serverinterface(socket);
-			break;
-		case WRONG_COMMAND_ERROR:
-			cout<<"Error:wrong command"<<endl;
-			return;
-		case WRONG_PASSWORD_ERROR:
-			cout<<"Error:password don't match"<<endl;
-			return;
-		case WRONG_USERNAME_ERROR:
-			cout<<"Error:user not exist"<<endl;
-			return;
-		case USER_EXIST_ERROR:
-			cout<<"Error:username already in use"<<endl;
-			return;
-		}
-		endOfSession=false;
-		return;
-
-
-
-
-	}
-	else
-	{
-		cout<<"Error: can't connect to game server"<<endl;
-		endOfSession=true;
-		return;
-	}
-}
-
-
-
-
-
-void RSPGameClient::serverinterface(TCPSocket* socket ) {
-	bool disconnected=false;
-	if(socket!=NULL)
-	{
-		while(!disconnected)
-		{
-			cout<<"SERVER MENU:\n"
-					"1 show online users\n"
-					"2 show high scores\n"
-					"3 <username> start game with <username>\n"
-					"4 start game with random user\n"
-					"5 set user available for random games"
-					"6 set user un-available from random games"
-					"7 disconnect from server"<<endl;
-
-			char buffer[100];
-			cin>>buffer;
-			char* cmd=strtok(buffer," ");
-			int size=htonl((strlen(buffer)+1));
-			switch(cmd)
-			{
-			case SET_USER_AVAILABLE:
-			case SET_USER_UNAVAILABLE:
-				socket->write((char*)&size, 4);
-				socket->write(buffer, size);
-				break;
-			case SHOW_USERS:
-			case SHOW_HS:
-				socket->write((char*)&size, 4);
-				socket->write(buffer, size);
-				break;
-				sleep(2);
-				socket->read((char*)&size, 4);
-				socket->read(buffer, size);
-				cout<<buffer<<endl;
-				break;
-			case DISCONNECT:
-				socket->write((char*)&size, 4);
-				socket->write(buffer, size);
-				disconnected=true;
-				endOfSession=true;
-				break;
-			case START_GAME_WITH_USER:
-			case START_GAME_WITH_RANDOM:
-
-			}
-		}
-	}
-	else
-		cout<<"Error:can't connect to server new perted socket"<<endl;
-	return;
-}
-
-void RSPGameClient::gameInterface() {
-}
-void RSPGameClient::run() {
-
-}
-void RSPGameClient::exit() {
 }
 
 RSPGameClient::~RSPGameClient() {
-	// TODO Auto-generated destructor stub
+	if(sock!=NULL)
+	{
+		sock->close();
+		delete sock;
+	}
 }
+void RSPGameClient::run() {
+	if(sock!=NULL)
+	{
+
+		bool res=this->loginOrRegister("login");
+
+		if(res==true)
+		{
+			cout<<"Successfully connected to server"<<endl;
+			bool done=false;
+			while(!done)
+			{
+				cout<<"\n*****MENU*****\n1 show online users\n2 show high scores\n3 <username> start game with user\n4 start game with random user\n5 exit\nenter your choice:";
+				string str;
+				getline(cin,str);
+				char buffer[strlen(str.c_str())+1];
+				strcpy(buffer,str.c_str());
+				char* cmd=strtok(buffer," ");
+				if(strcmp(cmd,"1")==0)
+				{
+					this->showUsers();
+				}
+				else if(strcmp(cmd,"2")==0)
+				{
+					this->showHighScores();
+				}
+				else if(strcmp(cmd,"3")==0)
+				{
+					char* username=strtok(NULL," ");
+				}
+				else if(strcmp(cmd,"4")==0)
+				{
+					this->startGameWith(NULL);
+				}
+				else if(strcmp(cmd,"5")==0)
+				{
+					done=true;
+				}
+
+			}
+
+		}
+		else
+		{
+			perror("Error: loginOrRegister method(res=false)");
+		}
+
+	}
+	else
+	{
+		cout<<"Error:Can't connect to server socket, network error"<<endl;
+	}
+}
+
+bool RSPGameClient::loginOrRegister(char* cmd) {
+	if(this->sock!=NULL)
+	{
+		if(strcmp(cmd,"login")==0||strcmp(cmd,"register")==0)
+		{
+			char buffer[100];
+			strcat(strcat(strcat(strcat(strcat(buffer,cmd)," "),username)," "),password);
+			int size=htonl(strlen(buffer)+1);
+			sock->write((char*)&size, 4);
+			sock->write(buffer, size);
+			sleep(2);
+			int answer;
+			sock->read((char*)&answer, 4);
+			switch(ntohl(answer))
+			{
+			case LOGIN_APPROVED:
+			case REGISTER_APPROVED:
+				sleep(2);
+				int newPort;
+				sock->read((char*)&newPort,4);
+				sleep(2);
+				//cout<<"new port: "<<ntohl(newPort)<<endl;
+				sock=new TCPSocket(SERVER_IP,ntohl(newPort));
+
+				if(sock!=NULL)
+				{
+					return true;
+				}
+				else
+				{
+					perror("new sock  is null( RSPGameClient::loginOrRegister)");
+					return false;
+				}
+
+			}
+
+		}
+		else
+		{
+			perror("cmd is not login/register( RSPGameClient::loginOrRegister)");
+			return false;
+		}
+	}
+	else
+	{
+		perror("sock  is null( RSPGameClient::loginOrRegister)");
+		return false;
+	}
+}
+
+void RSPGameClient::showHighScores() {
+	if(sock!=NULL)
+	{
+		char buffer[]="2";
+		int size=sizeof(buffer);
+		sock->write((char*)&size, 4);
+		sock->write(buffer, size);
+		sleep(2);
+		char answer[100];
+		int s;
+		sock->read((char*)&s, 4);
+		sock->read(answer, s);
+		if(strcmp(answer,"Error")!=0)
+		{
+			cout<<answer<<endl;
+		}
+		else
+			cout<<"Error: server problem"<<endl;
+	}
+	else
+	{
+		cout<<"Error: can't ask for high scores, socket is closed"<<endl;
+	}
+}
+
+void RSPGameClient::showUsers() {
+	if(sock!=NULL)
+	{
+		char buffer[]="1";
+		int size=(strlen(buffer)+1);
+		sock->write((char*)&size, 4);
+		sock->write(buffer, size);
+		sleep(2);
+		char answer[1000];
+		int s;
+		sock->read((char*)&s, 4);
+		sock->read(answer, s);
+		if(strcmp(answer,"Error")!=0)
+		{
+			cout<<answer<<endl;
+		}
+		else
+			cout<<"Error: server problem"<<endl;
+	}
+	else
+	{
+		cout<<"Error: can't ask for users list, socket is closed"<<endl;
+	}
+
+}
+
+void RSPGameClient::setUserAvailability(bool flag) {
+
+	if(sock!=NULL)
+	{
+		char* t="5";
+		char* f="6";
+
+		int size=htonl((strlen(t)+1));
+		sock->write((char*)&size, 4);
+		if(flag)
+			sock->write(t, size);
+		else
+			sock->write(f, size);
+	}
+	else
+	{
+		cout<<"Error: can't set new availability, socket is closed"<<endl;
+	}
+
+
+}
+
+void RSPGameClient::waitForGame() {
+	this->setUserAvailability(true);
+	MultipleTCPSocketsListener* listener=new MultipleTCPSocketsListener();
+	listener->addSocket(sock);
+	TCPSocket* ready=listener->listenToSocket();
+	char buffer[10];
+	int s;
+	ready->read((char*)&s, 4);
+	ready->read(buffer, ntohl(s));
+	if(strcmp(buffer,"failed")==0)
+	{
+		cout<<"can't run RSP game"<<endl;
+	}
+	else if(strcmp(buffer,"start")==0)
+	{
+		UDPSocket* gameSock=new UDPSocket(SERVER_IP,sock->getPort());
+		handleGame(gameSock);
+	}
+
+
+
+
+}
+
+void RSPGameClient::handleGame(UDPSocket* gameSocket) {
+}
+
+void RSPGameClient::startGameWith(char* username) {
+}
+
+
 
 } /* namespace networkingLab */

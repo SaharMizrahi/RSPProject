@@ -22,17 +22,45 @@ class RSPClientHandler:public MThread {
 	vector<TCPSocket*>* socketVector;
 	vector<RSPUser*>* users;
 	bool stopListen;
+	/**
+	 * This method define what the user want,and trigger relevant methods
+	 */
 	void analyzeClientMsg(TCPSocket* client);
+	/**
+	 * This method send to the client the game High Scores
+	 */
 	void showHighScores(TCPSocket* client);
+	/**
+	 * This method send to the client the online users list
+	 */
 	void showOnlineUsers(TCPSocket* client);
+	/**
+	 * This method start RSP game between two users, if <username> is null, the method will choose randomly available users
+	 */
 	void startGame(TCPSocket* client,char* username);
-
+	/**
+	 * if flag is true, the method will set the user available for game, if flag is false, the method will set the user not available
+	 */
+	void setUserAvailability(TCPSocket* sock,bool flag);
+	/**
+	 * This method diconnect user from RSP server
+	 */
+	void disconnectUserFromServer(TCPSocket* socket);
 public:
+	/**
+	 * This method stop the listening thread
+	 */
 	void stopListening();
+	/**
+	 * This method update users vector
+	 */
 	void update(vector<RSPUser*>* updater);
+	/**
+	 * This method update sockets vector
+	 */
 	void update(vector<TCPSocket*> updater);
 	void run();
-	RSPClientHandler(vector<TCPSocket*> vec,vector<RSPUser*>* u);
+	RSPClientHandler(vector<TCPSocket*>* vec,vector<RSPUser*>* u);
 	virtual ~RSPClientHandler();
 };
 

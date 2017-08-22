@@ -7,9 +7,11 @@
 
 #include "RSPGameClient.h"
 #include <string.h>
-#include "LoginProtocol.h"
-#include "ServerProtocol.h"
+#include "Protocol.h"
 #include "MultipleTCPSocketsListener.h"
+#include "UDPSocket.h"
+
+#include "Protocol.h"
 namespace networkingLab {
 
 
@@ -37,12 +39,13 @@ void RSPGameClient::run() {
 
 		if(res==true)
 		{
-			cout<<"Successfully connected to server"<<endl;
+			cout<<this->username<<" successfully connected to server"<<endl;
 			bool done=false;
 			while(!done)
 			{
-				cout<<"\n*****MENU*****\n1 show online users\n2 show high scores\n3 <username> start game with user\n4 start game with random user\n5 exit\nenter your choice:";
+				cout<<"\n*****MENU*****\n<1> show online users <2> show high scores <3> <username> start game with user <4> start game with random user <5> set user available for game <6> set user un-available for games <7> exit\n";
 				string str;
+				cout<<this->username<<":";
 				getline(cin,str);
 				char buffer[strlen(str.c_str())+1];
 				strcpy(buffer,str.c_str());
@@ -58,6 +61,7 @@ void RSPGameClient::run() {
 				else if(strcmp(cmd,"3")==0)
 				{
 					char* username=strtok(NULL," ");
+					this->startGameWith(username);
 				}
 				else if(strcmp(cmd,"4")==0)
 				{
@@ -65,6 +69,15 @@ void RSPGameClient::run() {
 				}
 				else if(strcmp(cmd,"5")==0)
 				{
+					this->waitForGame();
+				}
+				else if(strcmp(cmd,"6")==0)
+				{
+					this->setUserAvailability(false);
+				}
+				else if(strcmp(cmd,"7")==0)
+				{
+					disconnectFromServer();
 					done=true;
 				}
 
@@ -191,7 +204,7 @@ void RSPGameClient::setUserAvailability(bool flag) {
 		char* t="5";
 		char* f="6";
 
-		int size=htonl((strlen(t)+1));
+		int size=sizeof(t);
 		sock->write((char*)&size, 4);
 		if(flag)
 			sock->write(t, size);
@@ -208,34 +221,222 @@ void RSPGameClient::setUserAvailability(bool flag) {
 
 void RSPGameClient::waitForGame() {
 	this->setUserAvailability(true);
-	MultipleTCPSocketsListener* listener=new MultipleTCPSocketsListener();
-	listener->addSocket(sock);
-	TCPSocket* ready=listener->listenToSocket();
 	char buffer[10];
 	int s;
-	ready->read((char*)&s, 4);
-	ready->read(buffer, ntohl(s));
-	if(strcmp(buffer,"failed")==0)
+	sleep(1);
+	int otherPort;
+	sock->read((char*)&otherPort, 4);
+	if(otherPort!=-1)
 	{
-		cout<<"can't run RSP game"<<endl;
+		handleGame(otherPort);
+
 	}
-	else if(strcmp(buffer,"start")==0)
-	{
-		UDPSocket* gameSock=new UDPSocket(SERVER_IP,sock->getPort());
-		handleGame(gameSock);
-	}
+
+
+
 
 
 
 
 }
 
-void RSPGameClient::handleGame(UDPSocket* gameSocket) {
+int RSPGameClient::sendToOtherUser(UDPSocket* Sock, int otherPort) {
+	cout<<"Choose one: r-rock s-scissors p-paper b-exit undefined choice will cause automatic choosing rock"<<endl;
+	cout<<this->username<<": ";
+	char buf[10];
+	memset(buf,0,10);
+	cin>>buf;
+
+	if(strcmp(buf,"s")==0||strcmp(buf,"scissors")==0)
+	{
+		char*msg="s";
+		Sock->sendTo(msg, SERVER_IP, otherPort);
+
+		return SCISSORS;
+	}
+	else if(strcmp(buf,"p")==0||strcmp(buf,"paper")==0)
+	{
+		char*msg="p";
+		Sock->sendTo(msg, SERVER_IP, otherPort);
+		return PAPER;
+	}
+	else if(strcmp(buf,"b")==0||strcmp(buf,"exit")==0)
+	{
+		char*msg="b";
+		Sock->sendTo(msg, SERVER_IP, otherPort);
+		return BYEBYE;
+	}
+	else//rock
+	{
+		char*msg="r";
+		Sock->sendTo(msg, SERVER_IP, otherPort);
+		return ROCK;
+	}
+
+
+}
+
+int RSPGameClient::recvFromOtherUser(UDPSocket* mySock) {
+	char buf[10];
+	memset(buf,0,10);
+	mySock->recv(buf, 10);
+	if(strcmp(buf,"r")==0)
+		return ROCK;
+	else if(strcmp(buf,"p")==0)
+		return PAPER;
+	else if(strcmp(buf,"s")==0)
+		return SCISSORS;
+	else if(strcmp(buf,"b")==0)
+		return BYEBYE;
+	else
+	{
+		//randomly return rock
+		return ROCK;
+	}
+
+
+}
+
+int RSPGameClient::policy(int c1, int c2)
+{
+
+	if(c1==c2)
+	{
+		cout<<this->username<<" draw"<<endl;
+		return 0;
+	}
+	switch(c1)
+	{
+	case ROCK:
+		if(c2==PAPER)
+		{
+			cout<<this->username<<" lose :-("<<endl;
+			return -1;
+		}
+		else if(c2==SCISSORS)
+		{
+			cout<<this->username<<" win :-)"<<endl;
+			return 1;
+		}
+	case PAPER:
+		if(c2==ROCK)
+		{
+			cout<<this->username<<" win :-)"<<endl;
+			return 1;
+		}
+		else if(c2==SCISSORS)
+		{
+			cout<<this->username<<" lose :-("<<endl;
+			return -1;
+		}
+	case SCISSORS:
+		if(c2==PAPER)
+		{
+			cout<<this->username<<" win :-)"<<endl;
+			return 1;
+		}
+		else if(c2==ROCK)
+		{
+			cout<<this->username<<" lose :-("<<endl;
+			return -1;
+		}
+	default:
+		return 0;
+	}
+
+}
+
+void RSPGameClient::handleGame(int otherPort) {
+	bool isFinish=false;
+	UDPSocket* mySock=new UDPSocket(this->sock->getPort());
+	int c1,c2;
+	int res=0;
+	if(mySock!=NULL)
+	{
+
+			cout<<username<<" enter while"<<endl;
+			if(mySock->getPort()>otherPort)
+			{
+				c1=sendToOtherUser(mySock, otherPort);
+				c2=recvFromOtherUser(mySock);
+			}
+			else
+			{
+				c2=recvFromOtherUser(mySock);
+				c1=sendToOtherUser(mySock, otherPort);
+
+			}
+			if(c1==BYEBYE||c2==BYEBYE)//finish game
+			{
+				isFinish=true;
+				break;
+			}
+			else
+			{
+				res+=policy(c1, c2);
+				cout<<username<<": "<<res<<endl;
+				isFinish=false;
+			}
+
+
+
+
+		/**
+		 * UPDATE RANK!!!!
+		 */
+	}
+
+
+
 }
 
 void RSPGameClient::startGameWith(char* username) {
+	if(username!=NULL)
+	{
+		char msg[100];
+		memset(msg,0,100);
+		strcat(msg,"3 ");
+		strcat(msg,username);
+		int size=sizeof(msg);
+		sock->write((char*)&size, 4);
+		sock->write(msg, size);
+
+
+	}
+	else
+	{
+		char* msg="4";
+		int s=sizeof(msg);
+		sock->write((char*)&s, 4);
+		sock->write(msg, s);
+	}
+
+	sleep(1);
+	int otherPort;
+	sock->read((char*)&otherPort, 4);
+	if(otherPort!=-1)
+	{
+		handleGame(otherPort);
+
+	}
+
+
+
+
+}
+
+void RSPGameClient::disconnectFromServer() {
+
+	char* msg="7";
+	int s=sizeof(msg);
+	this->sock->write((char*)&s, 4);
+	this->sock->write(msg, s);
+	sleep(1);
+	this->sock->close();
 }
 
 
 
 } /* namespace networkingLab */
+
+

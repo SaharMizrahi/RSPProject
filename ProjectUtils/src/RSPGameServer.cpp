@@ -6,9 +6,9 @@
  */
 
 #include "RSPGameServer.h"
-#include "LoginProtocol.h"
 #include <string.h>
 #include "fstream"
+#include "Protocol.h"
 
 namespace networkingLab {
 
@@ -37,7 +37,7 @@ void RSPGameServer::run() {
 
 RSPGameServer::RSPGameServer(int port) {
 	this->bindingSocket=new TCPSocket(port);
-	this->clientHandler=new RSPClientHandler(this->socketsVector,&this->usersVector);
+	this->clientHandler=new RSPClientHandler(&this->socketsVector,&this->usersVector);
 	this->stopLogin=true;
 
 }

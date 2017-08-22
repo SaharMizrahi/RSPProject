@@ -18,7 +18,7 @@ class RSPUser {
 	bool availableForGame;
 public:
 	void setNewRank(int newRank);
-	int getPort(){return port;};
+	int getPort(){return socket->getPort();};
 	void setAvailability(bool flag){this->availableForGame=flag;};
 	bool isAvailable(){return availableForGame;};
 	char* getUsername(){return username;};

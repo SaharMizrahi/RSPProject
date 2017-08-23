@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include "Protocol.h"
-#include <sstream>  // Required for stringstreams
+#include <sstream>
 
 namespace networkingLab {
 
@@ -81,6 +81,8 @@ void RSPClientHandler::analyzeClientMsg(TCPSocket* client) {
 		}
 
 	}
+	else
+		perror("Error:socket is null(RSPClientHandler::analyzeClientMsg)");
 }
 void RSPClientHandler::showHighScores(TCPSocket* client) {
 	ifstream in("src/rank.txt");
@@ -105,7 +107,7 @@ void RSPClientHandler::showHighScores(TCPSocket* client) {
 		int s=htonl(strlen(b)+1);
 		client->write((char*)&s, 4);
 		client->write(b, s);
-		cout<<"can't open rank.txt"<<endl;
+		perror("Error:can't open rank.txt(RSPClientHandler::showHighScores)");
 	}
 
 }
@@ -131,6 +133,8 @@ void RSPClientHandler::showOnlineUsers(TCPSocket* client) {
 		client->write(buffer, s);
 
 	}
+	else
+		perror("Error: socket is null (RSPClientHandler::showOnlineUsers)");
 
 
 }
@@ -200,6 +204,8 @@ void RSPClientHandler::startGame(TCPSocket* client, char* username) {
 
 
 	}
+	else
+		perror("Error: socket is null (RSPClientHandler::startGame)");
 }
 
 void RSPClientHandler::setUserAvailability(TCPSocket* sock, bool flag) {
@@ -219,6 +225,8 @@ void RSPClientHandler::setUserAvailability(TCPSocket* sock, bool flag) {
 			}
 		}
 	}
+	else
+		perror("Error: socket is null (RSPClientHandler::setUserAvailability)");
 }
 
 void RSPClientHandler::disconnectUserFromServer(TCPSocket* socket) {
@@ -278,6 +286,9 @@ void RSPClientHandler::disconnectUserFromServer(TCPSocket* socket) {
 		}
 
 	}
+	else
+		perror("Error: socket is null (RSPClientHandler::disconnectUserFromServer)");
+
 }
 void RSPClientHandler::run() {
 	stopListen=false;
@@ -300,6 +311,7 @@ void RSPClientHandler::run() {
 RSPClientHandler::~RSPClientHandler() {
 	// TODO Auto-generated destructor stub
 
+
 }
 
 
@@ -312,15 +324,12 @@ void RSPClientHandler::stopListening() {
 void RSPClientHandler::updateUsersRank(TCPSocket* u1, char* res) {
 	char* username;
 	int newRank;
-	cout<<"change rank "<<res<<endl;
 	if(strcmp(res,"draw")==0||strcmp(res,"win")==0)
 	{
-		cout<<"1"<<endl;
 		for(int i=0;i<this->users->size();i++)
 		{
 			if(users->at(i)->getSocket()->getFd()==u1->getFd())
 			{
-				cout<<"2"<<endl;
 
 				username=users->at(i)->getUsername();
 				newRank=users->at(i)->getRank();
@@ -337,7 +346,6 @@ void RSPClientHandler::updateUsersRank(TCPSocket* u1, char* res) {
 				ifstream in ("src/rank.txt");
 				if(in.is_open())
 				{
-					cout<<"3"<<endl;
 
 					char buffer[100];
 					memset(buffer,0,100);
@@ -349,7 +357,6 @@ void RSPClientHandler::updateUsersRank(TCPSocket* u1, char* res) {
 					in.close();
 					ofstream out;
 					out.open("src/rank.txt", std::ofstream::out | std::ofstream::trunc);
-					cout<<"4"<<endl;
 
 					char* s=strtok(buffer," ");
 					while(s!=NULL)

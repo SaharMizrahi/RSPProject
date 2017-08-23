@@ -125,7 +125,7 @@ int RSPGameServer::authenticateClient(char* cmd, char* username,char* password) 
 				}
 			}
 		}
-		cout<<"cant open"<<endl;
+		perror("cant open");
 		return -2;
 
 }
@@ -159,7 +159,6 @@ bool RSPGameServer::handleConnectedClient(TCPSocket* sock) {
 			{
 			case LOGIN_APPROVED:
 			case REGISTER_APPROVED:
-				cout<<username<<" has join the RSP server"<<endl;
 				sock->write((char*)&res, 4);
 				this->addNewClient(sock, username, sock->getPort());
 				return true;

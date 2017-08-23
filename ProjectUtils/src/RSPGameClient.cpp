@@ -33,11 +33,11 @@ RSPGameClient::~RSPGameClient() {
 		delete sock;
 	}
 }
-void RSPGameClient::run() {
+/*void RSPGameClient::run() {
 	if(sock!=NULL)
 	{
 
-		bool res=loginOrRegister(cmd);
+		bool res=loginOrRegister();
 
 		if(res==true)
 		{
@@ -102,9 +102,9 @@ void RSPGameClient::run() {
 	{
 		cout<<"Error:Can't connect to server socket, network error"<<endl;
 	}
-}
+}*/
 
-bool RSPGameClient::loginOrRegister(char* cmd) {
+bool RSPGameClient::loginOrRegister() {
 	if(this->sock!=NULL)
 	{
 		if(strcmp(cmd,"login")==0||strcmp(cmd,"register")==0)
@@ -228,7 +228,7 @@ void RSPGameClient::setUserAvailability(bool flag) {
 
 }
 
-void RSPGameClient::waitForGame() {
+/*void RSPGameClient::waitForGame() {
 	this->setUserAvailability(true);
 	char buffer[10];
 	int s;
@@ -247,9 +247,9 @@ void RSPGameClient::waitForGame() {
 
 
 
-}
+}*/
 
-int RSPGameClient::sendToOtherUser(UDPSocket* Sock, int otherPort) {
+/*int RSPGameClient::sendToOtherUser(UDPSocket* Sock, int otherPort) {
 	cout<<"Choose one: r-rock s-scissors p-paper b-exit undefined choice will cause automatic choosing rock"<<endl;
 	cout<<this->username<<": ";
 	char buf[10];
@@ -283,7 +283,7 @@ int RSPGameClient::sendToOtherUser(UDPSocket* Sock, int otherPort) {
 	}
 
 
-}
+}*/
 
 int RSPGameClient::recvFromOtherUser(UDPSocket* mySock) {
 	char buf[10];
@@ -356,7 +356,7 @@ int RSPGameClient::policy(int c1, int c2)
 
 }
 
-void RSPGameClient::handleGame(int otherPort) {
+/*void RSPGameClient::handleGame(int otherPort) {
 	UDPSocket* mySock=new UDPSocket(this->sock->getPort());
 	int c1,c2;
 	int res=0;
@@ -393,9 +393,7 @@ void RSPGameClient::handleGame(int otherPort) {
 
 
 
-		/**
-		 * UPDATE RANK!!!!
-		 */
+
 			char* result;
 		if(res==0)
 		{
@@ -421,9 +419,9 @@ void RSPGameClient::handleGame(int otherPort) {
 
 
 
-}
+}*/
 
-void RSPGameClient::startGameWith(char* username) {
+int RSPGameClient::startGameWith(char* username) {
 	if(username!=NULL)
 	{
 		char msg[100];
@@ -447,11 +445,8 @@ void RSPGameClient::startGameWith(char* username) {
 	sleep(1);
 	int otherPort;
 	sock->read((char*)&otherPort, 4);
-	if(otherPort!=-1)
-	{
-		handleGame(otherPort);
+	return otherPort;
 
-	}
 
 
 

@@ -26,6 +26,9 @@ class RSPGameServer : public MThread{
 	TCPSocket* bindingSocket;
 	RSPClientHandler* clientHandler;
 	bool stopLogin;
+	bool isUserAlreadyLogin(char* username);
+
+	string encryptDecrypt(string toEncrypt);
 	/**
 	 * This method authenticate user if cmd is login, and if cmd is register he will be write in the valid users list
 	 */
@@ -39,7 +42,7 @@ class RSPGameServer : public MThread{
 	 */
 	void addNewClient(TCPSocket* sock,char* username,int port);
 public:
-	void run();
+	 virtual void run();
 	RSPGameServer(int port);
 	virtual ~RSPGameServer();
 };

@@ -22,6 +22,7 @@ class RSPClientHandler:public MThread {
 	vector<TCPSocket*>* socketVector;
 	vector<RSPUser*>* users;
 	bool stopListen;
+	void updateUsersRank(TCPSocket* u1,char* res);
 	/**
 	 * This method define what the user want,and trigger relevant methods
 	 */
@@ -59,7 +60,7 @@ public:
 	 * This method update sockets vector
 	 */
 	void update(vector<TCPSocket*> updater);
-	void run();
+	virtual void run();
 	RSPClientHandler(vector<TCPSocket*>* vec,vector<RSPUser*>* u);
 	virtual ~RSPClientHandler();
 };

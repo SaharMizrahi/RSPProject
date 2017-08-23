@@ -19,6 +19,8 @@ class RSPGameClient: public MThread {
 	TCPSocket* sock;
 	char* username;
 	char* password;
+	char* cmd;
+
 
 	int sendToOtherUser(UDPSocket* Sock,int otherPort);
 	int recvFromOtherUser(UDPSocket* mySock);
@@ -60,7 +62,7 @@ public:
 
 
 	void run();
-	RSPGameClient(char* u,char* p);
+	RSPGameClient(char* u,char* p,char* c);
 	virtual ~RSPGameClient();
 };
 

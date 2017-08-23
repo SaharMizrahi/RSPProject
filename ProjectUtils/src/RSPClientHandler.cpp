@@ -9,8 +9,8 @@
 #include <string.h>
 #include <fcntl.h>
 #include <fstream>
-#include "Game.h"
 #include "Protocol.h"
+#include <sstream>  // Required for stringstreams
 
 namespace networkingLab {
 
@@ -50,28 +50,32 @@ void RSPClientHandler::analyzeClientMsg(TCPSocket* client) {
 		int c=atoi(cmd);
 		switch(c)
 		{
-		case 1:
+		case SHOW_USERS:
 			showOnlineUsers(client);
 			break;
-		case 2:
+		case SHOW_HS:
 			showHighScores(client);
 			break;
-		case 3:
+		case START_GAME_WITH_USER:
 
 			startGame(client,strtok(NULL," ") );
 			break;
-		case 4:
+		case START_GAME_WITH_RANDOM:
 			startGame(client, NULL);
 			break;
-		case 5:
+		case SET_USER_AVAILABLE:
 			setUserAvailability(client, true);
 			break;
-		case 6:
+		case SET_USER_UNAVAILABLE:
 			setUserAvailability(client, false);
 			break;
-		case 7:
+		case DISCONNECT:
 			disconnectUserFromServer(client);
 			break;
+		case GAME_END:
+			updateUsersRank(client,strtok(NULL," ") );
+			setUserAvailability(client, false);
+
 
 
 		}
@@ -176,6 +180,11 @@ void RSPClientHandler::startGame(TCPSocket* client, char* username) {
 
 			u1->getSocket()->write((char*)&p2, 4);
 			u2->getSocket()->write((char*)&p1, 4);
+			this->setUserAvailability(u1->getSocket(), false);
+			this->setUserAvailability(u2->getSocket(), false);
+
+
+
 		}
 		else
 		{
@@ -201,6 +210,11 @@ void RSPClientHandler::setUserAvailability(TCPSocket* sock, bool flag) {
 			if(users->at(i)->getSocket()->getFd()==sock->getFd())
 			{
 				users->at(i)->setAvailability(flag);
+				if(flag)
+					cout<<users->at(i)->getUsername()<<" is available"<<endl;
+				else
+					cout<<users->at(i)->getUsername()<<" is un-available"<<endl;
+
 				break;
 			}
 		}
@@ -210,15 +224,45 @@ void RSPClientHandler::setUserAvailability(TCPSocket* sock, bool flag) {
 void RSPClientHandler::disconnectUserFromServer(TCPSocket* socket) {
 	if(socket!=NULL)
 	{
+		char* username;
+		int rank;
+		//remove from users vector
 		for(int i=0;i<this->users->size();i++)
 		{
 			if(users->at(i)->getSocket()->getFd()==socket->getFd())
 			{
+				username=users->at(i)->getUsername();
+				rank=users->at(i)->getRank();
+				cout<<users->at(i)->getUsername()<<" has left the RSP server"<<endl;
 				users->erase(users->begin()+i);
 
 				break;
 			}
 		}
+		//update rank
+		ifstream in ("src/rank.txt");//get user rank,if we don;t find init it by 0
+		if(in.is_open())
+		{
+			string line;
+			while(getline(in,line)&&strcmp(line.c_str(),"")!=0)
+			{
+				const char* s=line.c_str();
+				char* str=new char[line.length()+1];
+				strcpy(str,s);
+				char* u=strtok(str," ");
+				char* r=strtok(NULL," ");
+				if(strcmp(u,username)==0)
+				{
+					rank=atoi(r);
+
+					break;
+				}
+			}
+
+		}
+
+
+
 		for(int j=0;j<this->socketVector->size();j++)
 		{
 			if(socketVector->at(j)->getFd()==socket->getFd())
@@ -232,6 +276,7 @@ void RSPClientHandler::disconnectUserFromServer(TCPSocket* socket) {
 			}
 
 		}
+
 	}
 }
 void RSPClientHandler::run() {
@@ -241,7 +286,6 @@ void RSPClientHandler::run() {
 	TCPSocket* client=NULL;
 	while(!stopListen )
 	{
-
 		client=listener->listenToSocket();
 		if(client!=NULL)
 		{
@@ -265,7 +309,83 @@ void RSPClientHandler::stopListening() {
 		listener->interupt();
 }
 
+void RSPClientHandler::updateUsersRank(TCPSocket* u1, char* res) {
+	char* username;
+	int newRank;
+	cout<<"change rank "<<res<<endl;
+	if(strcmp(res,"draw")==0||strcmp(res,"win")==0)
+	{
+		cout<<"1"<<endl;
+		for(int i=0;i<this->users->size();i++)
+		{
+			if(users->at(i)->getSocket()->getFd()==u1->getFd())
+			{
+				cout<<"2"<<endl;
 
+				username=users->at(i)->getUsername();
+				newRank=users->at(i)->getRank();
+				if(strcmp(res,"draw")==0)
+				{
+					newRank+=1;
+				}
+				else if(strcmp(res,"win")==0)
+				{
+					newRank+=3;
+
+				}
+				//update rank.txt
+				ifstream in ("src/rank.txt");
+				if(in.is_open())
+				{
+					cout<<"3"<<endl;
+
+					char buffer[100];
+					memset(buffer,0,100);
+					string line;
+					while(getline(in,line)&&strcmp(line.c_str(),"")!=0)
+					{
+						strcat(strcat(buffer,line.c_str())," ");
+					}
+					in.close();
+					ofstream out;
+					out.open("src/rank.txt", std::ofstream::out | std::ofstream::trunc);
+					cout<<"4"<<endl;
+
+					char* s=strtok(buffer," ");
+					while(s!=NULL)
+					{
+						if(strcmp(s,username)==0)
+						{
+							out.write(s,strlen(s));
+							out.write(" ",1);
+							std::ostringstream oss;
+						    oss<< newRank;
+						    out.write(oss.str().c_str(),strlen(oss.str().c_str()));
+							out.write("\n",1);
+							s=strtok(NULL," ");//read and throw the last rank
+						}
+						else
+						{
+							out.write(s,strlen(s));
+							out.write(" ",1);
+							s=strtok(NULL," ");
+							out.write(s,strlen(s));
+							out.write("\n",1);
+						}
+						s=strtok(NULL," ");
+
+					}
+
+					out.close();
+
+				}
+
+				return;
+			}
+		}
+	}
+}
 
 } /* namespace networkingLab */
+
 

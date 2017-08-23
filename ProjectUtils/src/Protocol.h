@@ -12,7 +12,6 @@
  *  Created on: Aug 15, 2017
  *      Author: user
  */
-
 #ifndef SRC_PROTOCOL_H_
 #define SRC_PROTOCOL_H_
 #define SERVER_PORT 5000
@@ -25,6 +24,7 @@
 #define WRONG_USERNAME_ERROR 2
 #define REGISTER_APPROVED 3
 #define USER_EXIST_ERROR 4
+#define USER_ALREADY_LOGIN 5
 
 /**server protocol**/
 #define SHOW_USERS 1
@@ -34,6 +34,7 @@
 #define SET_USER_AVAILABLE 5
 #define SET_USER_UNAVAILABLE 6
 #define DISCONNECT 7
+#define GAME_END 8
 
 /**game protocol**/
 #define ROCK 1

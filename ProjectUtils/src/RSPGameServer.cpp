@@ -9,7 +9,6 @@
 #include <string.h>
 #include "fstream"
 #include "Protocol.h"
-
 namespace networkingLab {
 
 
@@ -34,8 +33,18 @@ void RSPGameServer::run() {
 		stopLogin=false;
 	}
 }
+string RSPGameServer::encryptDecrypt(string toEncrypt) {
+    char key = 'K'; //Any char will work
+    string output = toEncrypt;
+
+    for (int i = 0; i < toEncrypt.size(); i++)
+        output[i] = toEncrypt[i] ^ key;
+
+    return output;
+}
 
 RSPGameServer::RSPGameServer(int port) {
+
 	this->bindingSocket=new TCPSocket(port);
 	this->clientHandler=new RSPClientHandler(&this->socketsVector,&this->usersVector);
 	this->stopLogin=true;
@@ -49,17 +58,19 @@ int RSPGameServer::authenticateClient(char* cmd, char* username,char* password) 
 		{
 			if(strcmp(cmd,"login")==0)//this is an exist client
 			{
+
+
 				while(getline(in,line)&&strcmp(line.c_str(),"")!=0)
 				{
 					//get each username and password from users file
 					const char* s=line.c_str();
-					char* str=new char[line.length()+1];
+					char* str=new char[line.length()];
 					strcpy(str,s);
 					char* u=strtok(str," ");
 					char* p=strtok(NULL," ");
 					if(strcmp(u,username)==0)
 					{
-						if(strcmp(p,password)==0)//username exist,password match to username
+						if(strcmp(p,encryptDecrypt(password).c_str())==0)//username exist,password match to username
 						{
 							in.close();
 							return 0;
@@ -95,7 +106,7 @@ int RSPGameServer::authenticateClient(char* cmd, char* username,char* password) 
 					char buffer[100];
 					strcat(buffer,username);
 					strcat(buffer," ");
-					strcat(buffer,password);
+					strcat(buffer,encryptDecrypt(password).c_str());
 					ofstream out ("src/users.txt");//update users file
 					out.write(buffer,sizeof(buffer));
 					out.close();
@@ -118,31 +129,54 @@ int RSPGameServer::authenticateClient(char* cmd, char* username,char* password) 
 		return -2;
 
 }
+bool RSPGameServer::isUserAlreadyLogin(char* username) {
 
+	for(unsigned int i=0;i<this->usersVector.size();i++)
+	{
+		if(strcmp(usersVector.at(i)->getUsername(),username)==0)
+		{
+			return true;
+		}
+	}
+	return false;
+
+}
 bool RSPGameServer::handleConnectedClient(TCPSocket* sock) {
 	char buffer[100];
+	memset(buffer,0,100);
 	int size;
 	sock->read((char*)&size, 4);
-	sock->read(buffer, ntohl(size));
+	sock->read(buffer, size);
 	char* cmd=strtok(buffer," ");
-	if(strcmp(cmd,"login")==0||strcmp(cmd,"login")==0)
+	if(strcmp(cmd,"login")==0||strcmp(cmd,"register")==0)
 	{
 		char* username=strtok(NULL," ");
 		char* password=strtok(NULL," ");
-		int res=authenticateClient(cmd, username, password);
-		switch(res)
+		if(!isUserAlreadyLogin(username))
 		{
-		case LOGIN_APPROVED:
-		case REGISTER_APPROVED:
-			sock->write((char*)&res, 4);
-			this->addNewClient(sock, username, sock->getPort());
-			return true;
-		case OPEN_FILE_ERROR:
-		case WRONG_COMMAND_ERROR:
-		case WRONG_PASSWORD_ERROR:
-		case WRONG_USERNAME_ERROR:
-		case USER_EXIST_ERROR:
-			sock->write((char*)&res, 4);
+			int res=authenticateClient(cmd, username, password);
+			switch(res)
+			{
+			case LOGIN_APPROVED:
+			case REGISTER_APPROVED:
+				cout<<username<<" has join the RSP server"<<endl;
+				sock->write((char*)&res, 4);
+				this->addNewClient(sock, username, sock->getPort());
+				return true;
+			case OPEN_FILE_ERROR:
+			case WRONG_COMMAND_ERROR:
+			case WRONG_PASSWORD_ERROR:
+			case WRONG_USERNAME_ERROR:
+			case USER_EXIST_ERROR:
+				sock->write((char*)&res, 4);
+				sleep(2);
+				return false;
+			}
+		}
+		else
+		{
+			int r=USER_ALREADY_LOGIN;
+			sock->write((char*)&r, 4);
 			sleep(2);
 			return false;
 		}

@@ -22,6 +22,7 @@ class RSPClientHandler:public MThread {
 	vector<TCPSocket*>* socketVector;
 	vector<RSPUser*>* users;
 	bool stopListen;
+	void returnTestEcho(TCPSocket* sock);
 	void updateUsersRank(TCPSocket* u1,char* res);
 	/**
 	 * This method define what the user want,and trigger relevant methods

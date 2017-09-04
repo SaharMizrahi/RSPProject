@@ -75,6 +75,9 @@ void RSPClientHandler::analyzeClientMsg(TCPSocket* client) {
 		case GAME_END:
 			updateUsersRank(client,strtok(NULL," ") );
 			setUserAvailability(client, false);
+		case TEST_ECHO:
+			returnTestEcho(client);
+			break;
 
 
 
@@ -117,13 +120,14 @@ void RSPClientHandler::showOnlineUsers(TCPSocket* client) {
 	{
 		char buffer[1000];
 		memset(buffer,0,100);
+		strcat(buffer,"***USERS LIST***\n");
 		for(int i=0;i<users->size();i++)
 		{
 			strcat(buffer,users->at(i)->getUsername());
 			if(users->at(i)->isAvailable())
-				strcat(buffer," available ");
+				strcat(buffer," available\n");
 			else
-				strcat(buffer," not-available ");
+				strcat(buffer," not-available\n");
 
 
 
@@ -183,9 +187,14 @@ void RSPClientHandler::startGame(TCPSocket* client, char* username) {
 			int p1=u1->getSocket()->getPort(),p2=u2->getSocket()->getPort();
 
 			u1->getSocket()->write((char*)&p2, 4);
+			//send to user2 user1's details
+			int u1Size=strlen(u1->getUsername());
+			u2->getSocket()->write((char*)&u1Size, 4);
+			u2->getSocket()->write(u1->getUsername(), u1Size);
 			u2->getSocket()->write((char*)&p1, 4);
 			this->setUserAvailability(u1->getSocket(), false);
 			this->setUserAvailability(u2->getSocket(), false);
+			cout<<"Game between "<<u1->getUsername()<<" and "<<u2->getUsername()<<" is starting now..."<<endl;
 
 
 
@@ -216,11 +225,6 @@ void RSPClientHandler::setUserAvailability(TCPSocket* sock, bool flag) {
 			if(users->at(i)->getSocket()->getFd()==sock->getFd())
 			{
 				users->at(i)->setAvailability(flag);
-				if(flag)
-					cout<<users->at(i)->getUsername()<<" is available"<<endl;
-				else
-					cout<<users->at(i)->getUsername()<<" is un-available"<<endl;
-
 				break;
 			}
 		}
@@ -393,6 +397,17 @@ void RSPClientHandler::updateUsersRank(TCPSocket* u1, char* res) {
 	}
 }
 
-} /* namespace networkingLab */
 
+void RSPClientHandler::returnTestEcho(TCPSocket* sock) {
+
+	char answer[100];
+	memset(answer,0,100);
+	strcat(answer,"TEST ECHO");
+	int size=strlen(answer);
+	sock->write((char*)&size, 4);
+	sock->write(answer, size);
+
+}
+
+} /* namespace networkingLab */
 

@@ -35,6 +35,7 @@
 #define SET_USER_UNAVAILABLE 6
 #define DISCONNECT 7
 #define GAME_END 8
+#define TEST_ECHO 9
 
 /**game protocol**/
 #define ROCK 1

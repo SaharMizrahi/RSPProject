@@ -15,9 +15,6 @@
 using namespace std;
 namespace networkingLab {
 
-
-
-
 RSPGameClient::RSPGameClient(char* u,char* p,char* c) {
 	sock=new TCPSocket(SERVER_IP,SERVER_PORT);
 	this->username=u;
@@ -33,76 +30,7 @@ RSPGameClient::~RSPGameClient() {
 		delete sock;
 	}
 }
-/*void RSPGameClient::run() {
-	if(sock!=NULL)
-	{
 
-		bool res=loginOrRegister();
-
-		if(res==true)
-		{
-			cout<<this->username<<" successfully connected to server"<<endl;
-			bool done=false;
-			while(!done)
-			{
-				cout<<"\n*****MENU*****\n<1> show online users <2> show high scores <3> <username> start game with user <4> start game with random user <5> set user available for game <6> set user un-available for games <7> exit\n";
-				string str;
-				cout<<this->username<<":";
-				cin>>str;
-				cin.clear();
-				fflush(stdin);
-				char buffer[strlen(str.c_str())+1];
-				strcpy(buffer,str.c_str());
-				char* cmd=strtok(buffer," ");
-				if(strcmp(cmd,"1")==0)
-				{
-					this->showUsers();
-				}
-				else if(strcmp(cmd,"2")==0)
-				{
-					this->showHighScores();
-				}
-				else if(strcmp(cmd,"3")==0)
-				{
-					//char* username=strtok(NULL," ");
-					string username;
-					cin>>username;
-					char u[100];
-					strcpy(u,username.c_str());
-					this->startGameWith(u);
-				}
-				else if(strcmp(cmd,"4")==0)
-				{
-					this->startGameWith(NULL);
-				}
-				else if(strcmp(cmd,"5")==0)
-				{
-					this->waitForGame();
-				}
-				else if(strcmp(cmd,"6")==0)
-				{
-					this->setUserAvailability(false);
-				}
-				else if(strcmp(cmd,"7")==0)
-				{
-					disconnectFromServer();
-					done=true;
-				}
-
-			}
-
-		}
-		else
-		{
-			perror("Error: loginOrRegister method(res=false)");
-		}
-
-	}
-	else
-	{
-		cout<<"Error:Can't connect to server socket, network error"<<endl;
-	}
-}*/
 
 bool RSPGameClient::loginOrRegister() {
 	if(this->sock!=NULL)
@@ -308,10 +236,12 @@ int RSPGameClient::recvFromOtherUser(UDPSocket* mySock) {
 
 int RSPGameClient::policy(int c1, int c2)
 {
-
+	cout<<"*********"<<endl;
 	if(c1==c2)
 	{
 		cout<<this->username<<" draw"<<endl;
+		cout<<"*********"<<endl;
+
 		return 0;
 	}
 	switch(c1)
@@ -320,11 +250,15 @@ int RSPGameClient::policy(int c1, int c2)
 		if(c2==PAPER)
 		{
 			cout<<this->username<<" lose :-("<<endl;
+			cout<<"*********"<<endl;
+
 			return -1;
 		}
 		else if(c2==SCISSORS)
 		{
 			cout<<this->username<<" win :-)"<<endl;
+			cout<<"*********"<<endl;
+
 
 			return 1;
 		}
@@ -332,22 +266,30 @@ int RSPGameClient::policy(int c1, int c2)
 		if(c2==ROCK)
 		{
 			cout<<this->username<<" win :-)"<<endl;
+			cout<<"*********"<<endl;
+
 			return 1;
 		}
 		else if(c2==SCISSORS)
 		{
 			cout<<this->username<<" lose :-("<<endl;
+			cout<<"*********"<<endl;
+
 			return -1;
 		}
 	case SCISSORS:
 		if(c2==PAPER)
 		{
 			cout<<this->username<<" win :-)"<<endl;
+			cout<<"*********"<<endl;
+
 			return 1;
 		}
 		else if(c2==ROCK)
 		{
 			cout<<this->username<<" lose :-("<<endl;
+			cout<<"*********"<<endl;
+
 			return -1;
 		}
 	default:

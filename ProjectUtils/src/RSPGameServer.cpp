@@ -16,6 +16,7 @@ void RSPGameServer::run() {
 	clientHandler->start();
 	stopLogin=false;
 	TCPSocket* ready=NULL;
+	cout<<"Server is running..."<<endl;
 	while((ready=bindingSocket->listenAndAccept())!=NULL&&!stopLogin)
 	{
 		stopLogin=true;
@@ -224,10 +225,13 @@ void RSPGameServer::addNewClient(TCPSocket* sock, char* username, int port) {
 	this->usersVector.push_back(newUser);
 	this->clientHandler->update(&usersVector);
 
+
 }
 
 RSPGameServer::~RSPGameServer() {
 	// TODO Auto-generated destructor stub
+	cout<<"Server is shutting down..."<<endl;
+
 }
 
 } /* namespace networkingLab */

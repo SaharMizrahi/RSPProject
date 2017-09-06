@@ -75,6 +75,7 @@ void RSPClientHandler::analyzeClientMsg(TCPSocket* client) {
 		case GAME_END:
 			updateUsersRank(client,strtok(NULL," ") );
 			setUserAvailability(client, false);
+			break;
 		case TEST_ECHO:
 			returnTestEcho(client);
 			break;

@@ -145,7 +145,6 @@ void RSPClientHandler::showOnlineUsers(TCPSocket* client) {
 
 void RSPClientHandler::startGame(TCPSocket* client, char* username) {
 	RSPUser *u1=NULL,*u2=NULL;
-
 	if(client!=NULL)
 	{
 		//find user1
